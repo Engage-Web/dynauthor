@@ -4,7 +4,7 @@ Plugin Name: Dynauthor - Dynamic Author Filter
 Plugin URI: http://www.engageweb.co.uk/dynauthor-wordpress-plugin-6767.html
 Description: Dynamic filtering of authors
 Author: Engage Web - Steven Morris
-Version: 1.2
+Version: 1.2.1
 Author URI: http://www.engageweb.co.uk/about-us/meet-the-team#Steven
 License: GPL2
 Text Domain: dynauthor
