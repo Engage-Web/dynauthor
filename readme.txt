@@ -1,4 +1,4 @@
-=== Plugin Name ===
+=== Dynauthor - Dynamic Author Filter ===
 Contributors: StuckOn_dev
 Tags: author, dynamic list
 Requires at least: 3.5.1

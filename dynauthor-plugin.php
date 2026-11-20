@@ -7,7 +7,12 @@ Author: Engage Web - Steven Morris
 Version: 1.2
 Author URI: http://www.engageweb.co.uk/about-us/meet-the-team#Steven
 License: GPL2
+Text Domain: dynauthor
 */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /*************************************************************/
 	
@@ -18,11 +23,20 @@ License: GPL2
 	
 	function dynauthor_ajax_check_author()
 		{	global $wpdb;
-			$query = $_POST['data'];
+			check_ajax_referer( 'dynauthor_search', 'nonce' );
+			$query = isset( $_POST['data'] ) ? sanitize_text_field( stripslashes( $_POST['data'] ) ) : '';
+			$like  = '%' . $wpdb->esc_like( $query ) . '%';
 			echo '<ul class="" id="" name="">';
-			$authorsname = $wpdb->get_results("SELECT ID, display_name from $wpdb->users WHERE display_name LIKE '%{$query}%' ORDER BY ID LIMIT 0,30 ");
+			$authorsname = $wpdb->get_results(
+				$wpdb->prepare( "SELECT ID, display_name FROM {$wpdb->users} WHERE display_name LIKE %s ORDER BY ID LIMIT 30", $like )
+			);
 			foreach ($authorsname as $author) {
-			  echo "<li class='theme-option'><a class=\"authorlink\" style=\"cursor:pointer;\" authname='" . $author->display_name . "' authid='" . $author->ID . "'>" . $author->display_name . "</a></li>\n";  
+				printf(
+					'<li class="theme-option"><a class="authorlink" style="cursor:pointer;" authname="%1$s" authid="%2$d">%3$s</a></li>',
+					esc_attr( $author->display_name ),
+					(int) $author->ID,
+					esc_html( $author->display_name )
+				);
 			}
 			echo'</ul>
 			<script language="javascript" type="text/javascript">
@@ -36,17 +50,17 @@ License: GPL2
 					});
 			</script>			
 			';
-			die();
+			wp_die();
 		}
 	
 	function create_theme_taxonomy() {
 		if (!taxonomy_exists('theme')) {
-			register_taxonomy( 'theme', 'post', array( 'hierarchical' => false, 'label' => __('Theme'), 'query_var' => 'theme', 'rewrite' => array( 'slug' => 'theme' ) ) );
+			register_taxonomy( 'theme', 'post', array( 'hierarchical' => false, 'label' => __( 'Theme', 'dynauthor' ), 'query_var' => 'theme', 'rewrite' => array( 'slug' => 'theme' ) ) );
 		}
 	}
 	
 	function add_theme_box() {
-		add_meta_box('authordiv', __('Author'), 'dynauthor_box', 'post', 'normal', 'core');
+		add_meta_box( 'authordiv', __( 'Author', 'dynauthor' ), 'dynauthor_box', 'post', 'normal', 'core' );
 	}  
 	 
 	function add_theme_menus() {
@@ -59,7 +73,7 @@ License: GPL2
 	   
 	function dynauthor_box($post) {
 		echo '<input type="hidden" name="taxonomy_noncename" id="taxonomy_noncename" value="' .
-					wp_create_nonce( 'taxonomy_theme' ) . '" />';
+					esc_attr( wp_create_nonce( 'taxonomy_theme' ) ) . '" />';
 		 
 		$pluginurl = plugins_url( '/' , __FILE__ );	
 		wp_enqueue_script( 'jquery' );
@@ -79,9 +93,9 @@ License: GPL2
 		?> 	
 			
 		<label><strong>Current Author:</strong></label>
-		<div><?php echo $first_name; ?></div>
+		<div><?php echo esc_html( $first_name ); ?></div>
 		<label><strong>New Author:</strong></label><br>
-		<input type="text" name="filterbox" id="authfilbox" autocomplete="off">	<input type="hidden" name="post_author_override" id="post_author_override" readonly="readonly" value="<?php echo $user_id; ?>">	
+		<input type="text" name="filterbox" id="authfilbox" autocomplete="off">	<input type="hidden" name="post_author_override" id="post_author_override" readonly="readonly" value="<?php echo esc_attr( $user_id ); ?>">	
 		<div id="resultauth"></div>
 		
 		<script language="javascript" type="text/javascript">
@@ -93,6 +107,7 @@ License: GPL2
 							ajaxurl, 
 							{
 							   'action':'check_author',
+							   'nonce':'<?php echo esc_js( wp_create_nonce( 'dynauthor_search' ) ); ?>',
 							   'data':jQuery("#authfilbox").val()
 							}, 
 							function(response){
